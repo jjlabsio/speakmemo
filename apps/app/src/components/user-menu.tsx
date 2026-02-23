@@ -69,10 +69,20 @@ export function UserMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
-        <Avatar className="h-8 w-8 rounded-lg grayscale">
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hover:bg-transparent dark:hover:bg-transparent aria-expanded:bg-transparent"
+          />
+        }
+      >
+        <Avatar size="sm" className="rounded-md grayscale">
           {user.image && <AvatarImage src={user.image} alt={user.name} />}
-          <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+          <AvatarFallback className="rounded-md bg-transparent">
+            {initials}
+          </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="min-w-56 rounded-lg" align="end">
