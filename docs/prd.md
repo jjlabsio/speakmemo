@@ -233,8 +233,8 @@ User       Client(PWA)     Server(API)    Whisper    LLM     Supabase
 
 #### Day 1-2 (월-화): 프로젝트 셋업 + 음성 녹음
 
-- [ ] Supabase 프로젝트 생성 및 연동 (DB + Storage)
-- [ ] Google OAuth 로그인 구현 (Better Auth 기반, 이미 세팅됨)
+- [x] Supabase 프로젝트 생성 및 연동 (DB + Storage) — DB 연동 완료 (Prisma + PostgreSQL), Storage 미구현
+- [x] Google OAuth 로그인 구현 (Better Auth 기반, 이미 세팅됨)
 - [ ] 모바일 웹 음성 녹음 UI 구현 (MediaRecorder API)
 - [ ] Safari/Chrome 코덱 분기 처리
 - [ ] 녹음 파일 Supabase Storage 업로드
