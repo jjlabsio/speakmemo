@@ -1,0 +1,28 @@
+enum NoteStatus {
+  processing
+  transcribed
+  summarized
+  failed
+
+  @@map("note_status")
+}
+
+model Note {
+  id           String     @id @default(cuid())
+  userId       String     @map("user_id")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       NoteStatus @default(processing)
+  recordingUrl String?    @map("recording_url")
+  durationSec  Int?       @map("duration_sec")
+  transcript   String?
+  summary      String?
+  keyPoints    Json?      @map("key_points")
+  actionItems  Json?      @map("action_items")
+  tags         Json?
+  segments     Json?
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notes")
+}

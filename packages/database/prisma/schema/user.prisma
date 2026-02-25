@@ -8,6 +8,7 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   sessions      Session[]
   accounts      Account[]
+  notes         Note[]
 
   @@map("users")
 }
