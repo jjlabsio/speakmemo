@@ -278,11 +278,11 @@ User       Client(PWA)     Server(API)    Whisper    LLM     Storage   DB(Postgr
 
 #### Day 3-4 (수-목): STT + AI 구조화 파이프라인
 
-- [ ] Whisper API 연동 (음성 → 텍스트 전사)
+- [x] Whisper API 연동 (음성 → 텍스트 전사)
 - [ ] 한국어 전사 품질 테스트 (산책 독백, 회의 메모, 아이디어 브레인스토밍 시나리오)
 - [ ] LLM 프롬프트 설계 및 반복 테스트
-- [ ] `POST /api/notes/process` 엔드포인트 구현
-- [ ] Note 모델 Prisma 스키마 추가 + 마이그레이션 (이미 완료됨)
+- [x] `POST /api/notes/process` 엔드포인트 구현
+- [x] Note 모델 Prisma 스키마 추가 + 마이그레이션 (이미 완료됨)
 
 **산출물**: 음성 → 전사 → 구조화 결과까지 E2E 파이프라인 동작
 
