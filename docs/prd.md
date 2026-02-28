@@ -252,12 +252,12 @@ User       Client(PWA)     Server(API)    Whisper    LLM     Storage   DB(Postgr
 > 본격적인 개발 전에 랜딩 페이지를 먼저 배포하여 SEO 인덱싱을 시작한다.
 > 검색엔진 크롤링/인덱싱에 수일~수주가 걸리므로 가능한 빨리 배포하는 것이 유리하다.
 
-- [ ] 랜딩 페이지 구현 (히어로 섹션 + 가치 제안 + 기능 소개 + CTA)
-- [ ] OG 이미지 + 메타 태그 (title, description, og:image)
-- [ ] SEO 기본 설정 (sitemap.xml, robots.txt, 구조화 데이터)
-- [ ] Google Search Console 등록 + 색인 요청
-- [ ] Vercel 배포 (speakmemo.app 도메인 연결)
-- [ ] Vercel Analytics 설정
+- [x] 랜딩 페이지 구현 (히어로 섹션 + 가치 제안 + 기능 소개 + CTA)
+- [x] OG 이미지 + 메타 태그 (title, description, og:image)
+- [x] SEO 기본 설정 (sitemap.xml, robots.txt, 구조화 데이터)
+- [x] Google Search Console 등록 + 색인 요청
+- [x] Vercel 배포 (speakmemo.app 도메인 연결)
+- [x] Vercel Analytics 설정
 
 **산출물**: speakmemo.app에 랜딩 페이지가 라이브, 검색엔진 인덱싱 시작, CTA는 앱으로 바로 연결
 
