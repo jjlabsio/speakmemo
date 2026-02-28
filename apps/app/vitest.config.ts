@@ -54,6 +54,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Stub `server-only` so Vitest can import Next.js server modules without
+      // triggering the runtime guard that throws in non-server environments.
+      "server-only": path.resolve(__dirname, "./src/test/server-only-mock.ts"),
       "@repo/ui/components/button": path.resolve(
         __dirname,
         "../../packages/ui/src/components/button.tsx",

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@repo/auth";
 import { database } from "@repo/database";
+import { downloadRecording } from "@repo/storage";
+import { transcribeAudio } from "@/lib/whisper";
 
 interface ProcessNoteBody {
   note_id?: unknown;
@@ -22,7 +24,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const trimmedId = noteId.trim();
   const note = await database.note.findUnique({
     where: { id: trimmedId },
-    select: { userId: true },
+    select: { userId: true, recordingUrl: true },
   });
 
   if (!note) {
@@ -33,6 +35,53 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // STT pipeline placeholder — will be wired to Whisper API in a future phase
-  return NextResponse.json({ noteId: trimmedId });
+  if (!note.recordingUrl) {
+    return NextResponse.json(
+      { error: "Note has no recording to process" },
+      { status: 400 },
+    );
+  }
+
+  // Derive the filename from the last path segment of the storage path.
+  // e.g. "user-123/1234567890.webm" → "1234567890.webm"
+  const filename = note.recordingUrl.split("/").pop() ?? "recording.bin";
+
+  try {
+    const audioBlob = await downloadRecording(note.recordingUrl);
+    const { text, segments, durationSec } = await transcribeAudio(
+      audioBlob,
+      filename,
+    );
+
+    await database.note.update({
+      where: { id: trimmedId },
+      data: { transcript: text, segments, durationSec, status: "transcribed" },
+    });
+
+    return NextResponse.json({ noteId: trimmedId, status: "transcribed" });
+  } catch (error) {
+    console.error(
+      "[/api/notes/process] Transcription error for note",
+      trimmedId,
+      ":",
+      error,
+    );
+
+    try {
+      await database.note.update({
+        where: { id: trimmedId },
+        data: { status: "failed" },
+      });
+    } catch (dbError) {
+      console.error(
+        "[/api/notes/process] Failed to mark note as failed:",
+        dbError,
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Transcription failed. Please try again.", noteId: trimmedId },
+      { status: 500 },
+    );
+  }
 }
