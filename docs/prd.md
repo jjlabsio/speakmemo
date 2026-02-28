@@ -35,15 +35,7 @@
 
 ## 기술 스택
 
-| 영역         | 선택                                             |
-| ------------ | ------------------------------------------------ |
-| 프레임워크   | Next.js (App Router) + Tailwind CSS              |
-| PWA          | next-pwa 또는 커스텀 서비스워커                  |
-| 인증         | Better Auth — Google OAuth (이미 세팅됨)         |
-| DB / Storage | Supabase (PostgreSQL + Storage)                  |
-| STT          | OpenAI Whisper API (`whisper-1`, language: `ko`) |
-| LLM          | Claude Haiku (속도/비용 최적) 또는 GPT-4o-mini   |
-| 배포         | Vercel                                           |
+> 기술 스택 상세는 [README.md](../README.md#tech-stack)를 참조하세요.
 
 ---
 

@@ -6,51 +6,30 @@
 
 녹음 버튼을 탭하고 말하면, Whisper로 전사하고 LLM이 요약 / 핵심 포인트 / 할 일 목록을 자동으로 추출한다.
 
-## Core Flow
-
-```
-녹음 버튼 탭 → 말하기 → 완료
-    → STT 전사 (Whisper API)
-    → LLM 구조화 (요약 + 핵심 포인트 + 액션아이템 + 태그)
-    → 노트 저장 및 열람
-```
-
-## MVP Scope
-
-**포함**
-
-- 모바일 웹 앱 (PWA)
-- 음성 녹음 및 STT 전사
-- LLM 기반 구조화 (요약 / 핵심 포인트 / 액션아이템 자동 추출)
-- 노트 목록 및 상세 조회
-- Google OAuth 로그인
-- 랜딩 페이지
-
-**제외 (Post-MVP)**
-
-- 네이티브 앱 (iOS/Android)
-- 외부 연동 (Notion, Jira, Calendar 등)
-- 팀/협업 기능
-- 커스텀 프롬프트/템플릿
-- 결제/구독 시스템
-- 실시간 스트리밍 전사
+> 핵심 플로우, MVP 스코프, 로드맵은 [PRD](./docs/prd.md)를 참조하세요.
 
 ---
 
 ## Tech Stack
 
-| Category  | Technology                                    |
-| --------- | --------------------------------------------- |
-| Framework | Next.js 16, React 19                          |
-| Language  | TypeScript 5.7 (strict mode)                  |
-| Monorepo  | Turborepo 2.6, pnpm 10.4                      |
-| Styling   | Tailwind CSS v4, shadcn/ui (radix-vega theme) |
-| Font      | Pretendard Variable (local)                   |
-| Linting   | ESLint 9 (flat config), Prettier              |
-| Auth      | Better Auth (Google OAuth, Prisma adapter)    |
-| Database  | Prisma ORM, PostgreSQL                        |
-| Git Hooks | Husky + lint-staged                           |
-| Runtime   | Node.js >= 20                                 |
+| Category   | Technology                                            |
+| ---------- | ----------------------------------------------------- |
+| Framework  | Next.js 16, React 19                                  |
+| Language   | TypeScript 5.7 (strict mode)                          |
+| Monorepo   | Turborepo 2.6, pnpm 10.4                              |
+| Styling    | Tailwind CSS v4, shadcn/ui (@base-ui/react)           |
+| Font       | Pretendard Variable (local)                           |
+| Auth       | Better Auth 1.2 (Google OAuth, Prisma adapter)        |
+| Database   | Prisma ORM 6, PostgreSQL                              |
+| Storage    | Supabase Storage (`@supabase/supabase-js`)            |
+| STT        | OpenAI Whisper API (`whisper-1`, language: `ko`)      |
+| LLM        | Claude Haiku (구조화: 요약 / 핵심포인트 / 액션아이템) |
+| Payment    | Polar                                                 |
+| Deployment | Vercel                                                |
+| Testing    | Vitest                                                |
+| Linting    | ESLint 9 (flat config), Prettier                      |
+| Git Hooks  | Husky + lint-staged                                   |
+| Runtime    | Node.js >= 20                                         |
 
 ## Project Structure
 
@@ -112,6 +91,7 @@ import { Button } from "@repo/ui/components/button";
 | ---------------------------- | ------------------------- | -------------------------------- |
 | `packages/auth`              | `@repo/auth`              | Better Auth 서버/클라이언트 설정 |
 | `packages/database`          | `@repo/database`          | Prisma 클라이언트, 스키마        |
+| `packages/storage`           | `@repo/storage`           | Supabase Storage 업로드/조회     |
 | `packages/ui`                | `@repo/ui`                | 공유 UI 컴포넌트                 |
 | `packages/eslint-config`     | `@repo/eslint-config`     | 공유 ESLint 설정                 |
 | `packages/typescript-config` | `@repo/typescript-config` | 공유 TypeScript 설정             |
