@@ -27,7 +27,7 @@
 - 외부 연동 (Notion, Jira, Calendar 등)
 - 팀/협업 기능
 - 커스텀 프롬프트/템플릿 설정
-- 결제/구독 시스템
+- 결제/구독 시스템 (Polar 연동 준비됨, 기능 구현은 Post-MVP)
 - 실시간 스트리밍 전사
 - 다국어 지원 (한국어 우선, 영어는 후순위)
 
@@ -41,26 +41,46 @@
 
 ## DB 스키마
 
-### `notes` 테이블
+> Prisma 스키마 원본: `packages/database/prisma/schema/note.prisma`
 
-```sql
-id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
-user_id         UUID NOT NULL REFERENCES users(id)
-status          TEXT NOT NULL DEFAULT 'processing'
-                  -- processing | structuring | completed | failed
-recording_url   TEXT          -- Supabase Storage 경로
-duration_sec    INTEGER       -- 녹음 길이 (초)
-transcript      TEXT          -- Whisper 전사 원문
-summary         TEXT          -- LLM 요약
-key_points      JSONB         -- ["포인트1", "포인트2", ...]
-action_items    JSONB         -- [{ task, priority, done }, ...]
-tags            JSONB         -- ["태그1", "태그2"]
-segments        JSONB         -- Whisper 타임스탬프 세그먼트 (후속 활용)
-created_at      TIMESTAMPTZ DEFAULT now()
-updated_at      TIMESTAMPTZ DEFAULT now()
+### NoteStatus enum
+
+```prisma
+enum NoteStatus {
+  processing   // STT 전사 중
+  transcribed  // 전사 완료, LLM 구조화 대기/진행 중
+  summarized   // 모든 처리 완료
+  failed       // 처리 실패
+
+  @@map("note_status")
+}
 ```
 
-**RLS**: `user_id = auth.uid()` 조건으로 Row Level Security 적용 필수.
+### Note 모델
+
+```prisma
+model Note {
+  id           String     @id @default(cuid())
+  userId       String     @map("user_id")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       NoteStatus @default(processing)
+  recordingUrl String?    @map("recording_url")   // Supabase Storage 경로
+  durationSec  Int?       @map("duration_sec")     // 녹음 길이 (초)
+  transcript   String?                              // Whisper 전사 원문
+  summary      String?                              // LLM 요약
+  keyPoints    Json?      @map("key_points")        // ["포인트1", "포인트2", ...]
+  actionItems  Json?      @map("action_items")      // [{ task, priority, done }, ...]
+  tags         Json?                                 // ["태그1", "태그2"]
+  segments     Json?                                 // Whisper 타임스탬프 세그먼트 (후속 활용)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notes")
+}
+```
+
+**인가(Authorization)**: 모든 API 엔드포인트에서 `session.userId === note.userId` 검증 필수. Better Auth 세션 기반으로 처리.
 
 ---
 
@@ -107,7 +127,7 @@ Supabase Storage 업로드
 POST /api/notes/process
   body: { recording_url, duration, created_at }
     ↓
-DB에 note 레코드 생성 (status: "processing")
+PostgreSQL(Prisma)에 Note 레코드 생성 (status: processing)
     ↓
 클라이언트에 note_id 반환 → 폴링 시작
   GET /api/notes/{note_id}/status (2초 간격)
@@ -115,12 +135,12 @@ DB에 note 레코드 생성 (status: "processing")
 ```
 
 > **Vercel 타임아웃 주의**: Serverless Function 기본 10초 (Hobby), 60초 (Pro).
-> 긴 녹음은 백그라운드 처리 또는 Supabase Edge Function 활용.
+> 긴 녹음은 Vercel Pro 플랜 또는 백그라운드 처리 패턴 활용.
 
 ### 3단계 — STT 전사 (서버)
 
 ```
-Supabase Storage에서 음성 파일 다운로드
+Supabase Storage에서 음성 파일 다운로드 (서버 사이드)
     ↓
 파일 크기 확인 (Whisper API 제한: 25MB)
 긴 녹음 시 청크 분할 (ffmpeg, 5분 단위)
@@ -130,7 +150,7 @@ OpenAI Whisper API 호출
   language: "ko"  ← 명시 필수 (자동감지 대비 ~15% 정확도 향상)
   response_format: "verbose_json"  ← 타임스탬프 포함
     ↓
-전사 결과 수신 → DB 업데이트 (status: "structuring")
+전사 결과 수신 → DB 업데이트 (status: transcribed)
 ```
 
 **비용**: $0.006/분 → 3분 녹음 기준 ~$0.018
@@ -166,15 +186,16 @@ OpenAI Whisper API 호출
 }
 ```
 
-> - JSON 파싱 실패 시 재시도 1회, 그래도 실패하면 raw transcript만 저장
+> - JSON 파싱 실패 시 재시도 1회, 그래도 실패하면 raw transcript만 저장 (status: `transcribed`로 유지)
 > - few-shot 예시 1-2개 포함하면 출력 품질 크게 향상됨
+> - 성공 시 DB 업데이트 (status: `summarized`)
 
 **비용**: Claude Haiku $0.25/1M input → 3분 녹음 기준 ~$0.001
 
 ### 5단계 — 결과 렌더링 (클라이언트)
 
 ```
-폴링에서 status: "completed" 감지
+폴링에서 status: summarized 감지
     ↓
 GET /api/notes/{note_id} → 전체 데이터 로드
     ↓
@@ -191,21 +212,24 @@ GET /api/notes/{note_id} → 전체 데이터 로드
 ### 전체 시퀀스
 
 ```
-User       Client(PWA)     Server(API)    Whisper    LLM     Supabase
- │              │               │             │        │          │
- │──녹음 완료─→│               │             │        │          │
- │              │──파일 업로드─→│─────────────────────────────→Storage
- │              │──처리 요청──→│             │        │          │
- │              │←─note_id────│             │        │          │
- │              │               │──STT 요청──→│        │          │
- │  "정리 중..."│──폴링────────→│←─transcript│        │          │
- │              │               │──LLM 요청───────────→│          │
- │              │←─processing─│←─JSON──────────────│          │
- │              │               │──결과 저장──────────────────→DB
- │              │──폴링────────→│             │        │          │
- │              │←─completed──│             │        │          │
- │              │──노트 조회──→│←───────────────────────────DB
- │←─결과 렌더─│               │             │        │          │
+User       Client(PWA)     Server(API)    Whisper    LLM     Storage   DB(PostgreSQL)
+ │              │               │             │        │         │            │
+ │──녹음 완료─→│               │             │        │         │            │
+ │              │──파일 업로드─→│─────────────────────────────→│            │
+ │              │──처리 요청──→│             │        │         │            │
+ │              │               │──Note 생성────────────────────────────→│
+ │              │←─note_id────│             │        │         │            │
+ │              │               │──STT 요청──→│        │         │            │
+ │  "정리 중..."│──폴링────────→│←─transcript│        │         │            │
+ │              │               │──status:transcribed──────────────────→│
+ │              │←─transcribed│               │        │         │            │
+ │              │               │──LLM 요청───────────→│         │            │
+ │              │               │←─JSON──────────────│         │            │
+ │              │               │──status:summarized───────────────────→│
+ │              │──폴링────────→│             │        │         │            │
+ │              │←─summarized─│             │        │         │            │
+ │              │──노트 조회──→│←──────────────────────────────────────│
+ │←─결과 렌더─│               │             │        │         │            │
 ```
 
 ### 예상 처리 시간 & 비용 (3분 녹음 기준)
@@ -229,14 +253,13 @@ User       Client(PWA)     Server(API)    Whisper    LLM     Supabase
 > 검색엔진 크롤링/인덱싱에 수일~수주가 걸리므로 가능한 빨리 배포하는 것이 유리하다.
 
 - [ ] 랜딩 페이지 구현 (히어로 섹션 + 가치 제안 + 기능 소개 + CTA)
-- [ ] 얼리액세스 신청 폼 (Tally 또는 Google Form 임베드)
 - [ ] OG 이미지 + 메타 태그 (title, description, og:image)
 - [ ] SEO 기본 설정 (sitemap.xml, robots.txt, 구조화 데이터)
 - [ ] Google Search Console 등록 + 색인 요청
 - [ ] Vercel 배포 (speakmemo.app 도메인 연결)
 - [ ] Vercel Analytics 설정
 
-**산출물**: speakmemo.app에 랜딩 페이지가 라이브, 검색엔진 인덱싱 시작
+**산출물**: speakmemo.app에 랜딩 페이지가 라이브, 검색엔진 인덱싱 시작, CTA는 앱으로 바로 연결
 
 ---
 
@@ -244,7 +267,8 @@ User       Client(PWA)     Server(API)    Whisper    LLM     Supabase
 
 #### Day 1-2 (월-화): 프로젝트 셋업 + 음성 녹음
 
-- [x] Supabase 프로젝트 생성 및 연동 (DB + Storage)
+- [x] PostgreSQL + Prisma ORM 설정 (Docker Compose 기반)
+- [x] Supabase Storage 연동 (음성 파일 업로드용)
 - [x] Google OAuth 로그인 구현 (Better Auth 기반, 이미 세팅됨)
 - [ ] 모바일 웹 음성 녹음 UI 구현 (MediaRecorder API)
 - [ ] Safari/Chrome 코덱 분기 처리
@@ -258,7 +282,7 @@ User       Client(PWA)     Server(API)    Whisper    LLM     Supabase
 - [ ] 한국어 전사 품질 테스트 (산책 독백, 회의 메모, 아이디어 브레인스토밍 시나리오)
 - [ ] LLM 프롬프트 설계 및 반복 테스트
 - [ ] `POST /api/notes/process` 엔드포인트 구현
-- [ ] `notes` 테이블 Prisma 스키마 추가 + 마이그레이션
+- [ ] Note 모델 Prisma 스키마 추가 + 마이그레이션 (이미 완료됨)
 
 **산출물**: 음성 → 전사 → 구조화 결과까지 E2E 파이프라인 동작
 
@@ -307,7 +331,7 @@ User       Client(PWA)     Server(API)    Whisper    LLM     Supabase
 - [ ] 다양한 모바일 브라우저 테스트 (Chrome, Safari)
 - [ ] 긴 녹음(5분+) 처리 테스트
 - [ ] API 에러 핸들링 점검
-- [ ] Supabase RLS (Row Level Security) 확인
+- [ ] API 레벨 인가(Authorization) 검증 — 모든 엔드포인트에서 세션 userId 확인
 - [ ] API 호출당 비용 계산 및 검증
 
 **산출물**: 안정적으로 동작하는 서비스
@@ -351,7 +375,7 @@ User       Client(PWA)     Server(API)    Whisper    LLM     Supabase
 
 1. Notion / TickTick 연동 (액션아이템 자동 내보내기)
 2. 커스텀 템플릿 (회의록, 일기, 아이디어 등)
-3. 프로 플랜 결제 (월 $5~10)
+3. 프로 플랜 결제 — Polar 연동 (월 $5~10)
 4. 네이티브 앱 (또는 Capacitor 래핑)
 5. 팀/공유 기능
 6. 웨어러블 연동 (Apple Watch 등)
