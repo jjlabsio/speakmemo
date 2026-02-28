@@ -270,9 +270,9 @@ User       Client(PWA)     Server(API)    Whisper    LLM     Storage   DB(Postgr
 - [x] PostgreSQL + Prisma ORM 설정 (Docker Compose 기반)
 - [x] Supabase Storage 연동 (음성 파일 업로드용)
 - [x] Google OAuth 로그인 구현 (Better Auth 기반, 이미 세팅됨)
-- [ ] 모바일 웹 음성 녹음 UI 구현 (MediaRecorder API)
-- [ ] Safari/Chrome 코덱 분기 처리
-- [ ] 녹음 파일 Supabase Storage 업로드
+- [x] 모바일 웹 음성 녹음 UI 구현 (MediaRecorder API)
+- [x] Safari/Chrome 코덱 분기 처리
+- [x] 녹음 파일 Supabase Storage 업로드
 
 **산출물**: 로그인 → 녹음 → 저장까지 동작
 
