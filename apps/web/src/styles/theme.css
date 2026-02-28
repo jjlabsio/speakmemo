@@ -1,58 +1,68 @@
 /*
- * askdialog.com-inspired theme overrides for the landing page.
- * Monochromatic black/white base with warm rose accent (#c97b84).
+ * semo landing page theme overrides.
+ * Primary: #6366F1 (Indigo 500), Accent: #F59E0B (Amber 500)
  * Imported after @repo/ui/globals.css to override shared tokens.
  */
 
 :root {
-  /* Primary: near-black for CTA buttons */
-  --primary: oklch(0.145 0 0);
+  /* Primary: Indigo 500 — trust + tech aesthetic */
+  --primary: oklch(0.585 0.233 277.1);
   --primary-foreground: oklch(0.985 0 0);
 
-  /* Secondary: warm light gray */
-  --secondary: oklch(0.965 0.001 60);
-  --secondary-foreground: oklch(0.205 0 0);
+  /* Secondary: light indigo tint */
+  --secondary: oklch(0.94 0.025 277.1);
+  --secondary-foreground: oklch(0.25 0.1 277.1);
 
-  /* Muted: subtle warm gray (#f7f7f7 equivalent) */
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.45 0 0);
+  /* Muted: near-white warm gray */
+  --muted: oklch(0.98 0 0);
+  --muted-foreground: oklch(0.44 0.012 60);
 
-  /* Accent: rose/mauve (#c97b84) */
-  --accent: oklch(0.635 0.07 10);
-  --accent-foreground: oklch(0.985 0 0);
+  /* Accent: Amber 500 — CTA emphasis */
+  --accent: oklch(0.75 0.183 72.6);
+  --accent-foreground: oklch(0.15 0 0);
 
-  /* Borders: very subtle */
-  --border: oklch(0.932 0 0);
-  --input: oklch(0.932 0 0);
+  /* Background: #FAFAFA */
+  --background: oklch(0.985 0 0);
 
-  /* Ring: matches accent */
-  --ring: oklch(0.635 0.07 10);
+  /* Card surface: pure white */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.11 0.014 264);
 
-  /* Larger radius for rounder cards/buttons */
-  --radius: 0.75rem;
+  /* Text: Gray 900 */
+  --foreground: oklch(0.11 0.014 264);
+
+  /* Borders: subtle */
+  --border: oklch(0.92 0.006 264);
+  --input: oklch(0.92 0.006 264);
+
+  /* Ring: matches primary */
+  --ring: oklch(0.585 0.233 277.1);
+
+  /* Border radius: rounded feel (12-16px range) */
+  --radius: 0.875rem;
 }
 
 .dark {
-  /* Primary: white on dark */
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.685 0.19 277.1);
+  --primary-foreground: oklch(0.985 0 0);
 
-  /* Secondary */
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.22 0.03 277.1);
+  --secondary-foreground: oklch(0.9 0.025 277.1);
 
-  /* Muted */
   --muted: oklch(0.2 0 0);
   --muted-foreground: oklch(0.65 0 0);
 
-  /* Accent: lighter rose for dark mode */
-  --accent: oklch(0.72 0.07 10);
-  --accent-foreground: oklch(0.145 0 0);
+  --accent: oklch(0.78 0.165 72.6);
+  --accent-foreground: oklch(0.15 0 0);
 
-  /* Borders */
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
+  --background: oklch(0.12 0.01 264);
+  --card: oklch(0.16 0.01 264);
+  --card-foreground: oklch(0.97 0 0);
 
-  /* Ring */
-  --ring: oklch(0.72 0.07 10);
+  --foreground: oklch(0.97 0 0);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 12%);
+
+  --ring: oklch(0.685 0.19 277.1);
 }

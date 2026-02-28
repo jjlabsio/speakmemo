@@ -7,8 +7,9 @@ import { FaqSection } from "./_components/faq-section";
 import { PricingCta } from "./_components/pricing-cta";
 
 export const metadata: Metadata = {
-  title: "Pricing - Acme",
-  description: "Simple, transparent pricing. Start free and scale as you grow.",
+  title: "요금제 — semo",
+  description:
+    "지금은 무료로 사용하실 수 있어요. 이후 Pro 플랜이 생길 예정이에요.",
 };
 
 export default function PricingPage() {

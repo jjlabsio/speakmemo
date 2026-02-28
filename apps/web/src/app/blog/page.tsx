@@ -6,9 +6,9 @@ import { CategoryFilter } from "./_components/category-filter";
 import { PostGrid } from "./_components/post-grid";
 
 export const metadata: Metadata = {
-  title: "Blog - Acme",
+  title: "블로그 — semo",
   description:
-    "Insights on product development, engineering, and building better teams.",
+    "semo 팀의 이야기, 업데이트, 그리고 음성 메모 활용 팁을 공유해요.",
 };
 
 export default function BlogPage() {

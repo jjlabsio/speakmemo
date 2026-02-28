@@ -1,73 +1,39 @@
 import Link from "next/link";
 
-const LINK_GROUPS = [
-  {
-    title: "Product",
-    links: [
-      { label: "Features", href: "#features" },
-      { label: "Pricing", href: "/pricing" },
-      { label: "Integrations", href: "#" },
-      { label: "Changelog", href: "#" },
-      { label: "Documentation", href: "#" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "#" },
-      { label: "Blog", href: "/blog" },
-      { label: "Careers", href: "#" },
-      { label: "Press", href: "#" },
-      { label: "Contact", href: "#" },
-    ],
-  },
-  {
-    title: "Social",
-    links: [
-      { label: "Twitter", href: "#" },
-      { label: "GitHub", href: "#" },
-      { label: "Discord", href: "#" },
-      { label: "LinkedIn", href: "#" },
-    ],
-  },
+const FOOTER_LINKS = [
+  { label: "서비스 소개", href: "/#features" },
+  { label: "개인정보처리방침", href: "/privacy" },
+  { label: "문의하기", href: "mailto:hello@speakmemo.app" },
 ] as const;
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/40 py-16">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="grid gap-12 md:grid-cols-4">
-          <div>
-            <Link href="/" className="text-xl font-semibold tracking-tight">
-              Acme
-            </Link>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Build better products, faster than ever.
-            </p>
-          </div>
+    <footer className="border-t border-border/40 py-12">
+      <div className="mx-auto max-w-4xl px-6">
+        <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
+          <Link
+            href="/"
+            className="text-xl font-bold tracking-tight text-primary"
+          >
+            semo
+          </Link>
 
-          {LINK_GROUPS.map((group) => (
-            <div key={group.title}>
-              <h3 className="mb-4 text-sm font-medium">{group.title}</h3>
-              <ul className="flex flex-col gap-3">
-                {group.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <nav className="flex flex-wrap items-center justify-center gap-6">
+            {FOOTER_LINKS.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
         </div>
 
-        <div className="mt-16 border-t border-border/40 pt-8">
-          <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Acme Inc. All rights reserved.
+        <div className="mt-8 border-t border-border/40 pt-6">
+          <p className="text-center text-sm text-muted-foreground">
+            &copy; 2026 semo. All rights reserved.
           </p>
         </div>
       </div>
