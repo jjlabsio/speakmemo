@@ -1,65 +1,76 @@
 "use client";
 
-import { useState } from "react";
-
-import { Button } from "@repo/ui/components/button";
+import { useRecorderFlow } from "@/hooks/useRecorderFlow";
+import { RecorderButton } from "@/components/recorder/RecorderButton";
+import { RecordingTimer } from "@/components/recorder/RecordingTimer";
+import { WaveformVisualizer } from "@/components/recorder/WaveformVisualizer";
+import { RecordingStatus } from "@/components/recorder/RecordingStatus";
 
 export default function HomePage() {
-  const [isFlexLoading, setIsFlexLoading] = useState(false);
-  const [isInlineLoading, setIsInlineLoading] = useState(false);
+  const {
+    recorderState,
+    noteStatus,
+    isUploading,
+    error,
+    elapsedSec,
+    frequencyData,
+    start,
+    stop,
+  } = useRecorderFlow();
 
-  const handleFlexClick = () => {
-    setIsFlexLoading(true);
-    setTimeout(() => setIsFlexLoading(false), 2000);
-  };
-
-  const handleInlineClick = () => {
-    setIsInlineLoading(true);
-    setTimeout(() => setIsInlineLoading(false), 2000);
-  };
+  const isRecording = recorderState === "recording";
+  const showTimer = isRecording || recorderState === "stopped";
+  const showWaveform = isRecording;
+  const showPollingStatus =
+    isUploading ||
+    noteStatus === "processing" ||
+    noteStatus === "transcribed" ||
+    noteStatus === "summarized" ||
+    noteStatus === "failed";
 
   return (
-    <>
-      <p className="text-muted-foreground mb-4 text-xs font-medium tracking-widest uppercase">
-        Welcome
-      </p>
-      <h1 className="mb-14 max-w-lg text-center text-4xl leading-snug font-normal">
-        Build your next SaaS product faster than ever.
-      </h1>
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-8 px-4">
+      {/* Waveform — visible only while recording */}
+      {showWaveform && (
+        <WaveformVisualizer
+          frequencyData={frequencyData}
+          className="h-16 w-full max-w-xs text-primary"
+        />
+      )}
 
-      <div className="flex w-full max-w-md gap-3">
-        <Button
-          isLoading={isFlexLoading}
-          onClick={handleFlexClick}
-          className="flex-1 px-8 py-5 text-base font-semibold uppercase tracking-wide"
-        >
-          Get Started
-        </Button>
-        <Button
-          variant="secondary"
-          className="flex-1 px-8 py-5 text-base font-semibold uppercase tracking-wide"
-        >
-          Learn More
-        </Button>
-      </div>
+      {/* Elapsed time — visible once recording starts */}
+      {showTimer && (
+        <RecordingTimer
+          elapsedSec={elapsedSec}
+          className="text-4xl font-mono tabular-nums text-foreground"
+        />
+      )}
 
-      <div className="mt-8">
-        <Button
-          isLoading={isInlineLoading}
-          onClick={handleInlineClick}
-          className="px-8 py-5 text-base font-semibold uppercase tracking-wide"
-        >
-          Submit Without Flex
-        </Button>
-      </div>
+      {/* Main action button */}
+      <RecorderButton
+        recorderState={recorderState}
+        onStart={start}
+        onStop={stop}
+        className="h-24 w-24 rounded-full text-sm font-semibold uppercase tracking-wide transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+      />
 
-      <div className="text-muted-foreground mt-6 flex items-center gap-3 text-xs">
-        <span>No credit card required</span>
-        <span aria-hidden="true">&middot;</span>
-        <span>Free tier available</span>
-        <span aria-hidden="true">&middot;</span>
-        <span>Cancel anytime</span>
-      </div>
-    </>
+      {/* Processing / polling status messages */}
+      {showPollingStatus && (
+        <RecordingStatus
+          status={isUploading ? "processing" : noteStatus}
+          className="text-sm text-muted-foreground"
+        />
+      )}
+
+      {/* Error message */}
+      {error && (
+        <p
+          role="alert"
+          className="max-w-xs text-center text-sm text-destructive"
+        >
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
