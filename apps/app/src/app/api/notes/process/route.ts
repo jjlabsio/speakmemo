@@ -24,7 +24,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const trimmedId = noteId.trim();
   const note = await database.note.findUnique({
     where: { id: trimmedId },
-    select: { userId: true, recordingUrl: true },
+    select: { userId: true, recordingUrl: true, status: true },
   });
 
   if (!note) {
@@ -35,9 +35,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  // Idempotency: skip reprocessing if already transcribed or summarized.
+  if (note.status === "transcribed" || note.status === "summarized") {
+    return NextResponse.json({ noteId: trimmedId, status: note.status });
+  }
+
   if (!note.recordingUrl) {
     return NextResponse.json(
       { error: "Note has no recording to process" },
+      { status: 400 },
+    );
+  }
+
+  // Guard: recordingUrl must belong to the authenticated user's prefix.
+  const expectedPrefix = `${session.user.id}/`;
+  if (!note.recordingUrl.startsWith(expectedPrefix)) {
+    return NextResponse.json(
+      { error: "Invalid recording path" },
       { status: 400 },
     );
   }

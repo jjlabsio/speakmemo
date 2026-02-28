@@ -112,6 +112,13 @@ describe("POST /api/notes/process", () => {
     expect(response.status).toBe(400);
   });
 
+  it("returns 400 when note_id is whitespace only", async () => {
+    mockAuthedSession();
+    const request = makeRequest({ note_id: "   " });
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+  });
+
   it("returns 404 when the note does not exist", async () => {
     mockAuthedSession("user-123");
     mockFindUnique.mockResolvedValue(null);
@@ -242,6 +249,46 @@ describe("POST /api/notes/process", () => {
         }),
       }),
     );
+  });
+
+  it("returns 200 immediately when note is already transcribed (idempotency)", async () => {
+    mockAuthedSession("user-123");
+    mockFindUnique.mockResolvedValue({
+      userId: "user-123",
+      recordingUrl: "user-123/1234567890.webm",
+      status: "transcribed",
+    });
+
+    const request = makeRequest({ note_id: "note-already-done" });
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({
+      noteId: "note-already-done",
+      status: "transcribed",
+    });
+    // Should not call downstream services at all
+    expect(mockDownloadRecording).not.toHaveBeenCalled();
+    expect(mockTranscribeAudio).not.toHaveBeenCalled();
+  });
+
+  it("still returns 500 JSON when the status-failed DB update also throws", async () => {
+    mockAuthedSession("user-123");
+    mockFindUnique.mockResolvedValue({
+      userId: "user-123",
+      recordingUrl: "user-123/abc.webm",
+    });
+    mockDownloadRecording.mockRejectedValue(new Error("Storage down"));
+    mockUpdate.mockRejectedValue(new Error("DB also down"));
+
+    const request = makeRequest({ note_id: "note-double-fail" });
+    const response = await POST(request);
+
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body).toHaveProperty("error");
+    expect(body).toHaveProperty("noteId", "note-double-fail");
   });
 
   it("passes correct filename (derived from recordingUrl) to transcribeAudio", async () => {

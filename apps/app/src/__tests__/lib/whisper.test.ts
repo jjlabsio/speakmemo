@@ -96,6 +96,15 @@ describe("transcribeAudio", () => {
     });
   });
 
+  it("throws WhisperError when blob is empty (0 bytes)", async () => {
+    const { transcribeAudio } = await import("@/lib/whisper");
+    const emptyBlob = makeBlob(0);
+
+    await expect(transcribeAudio(emptyBlob, "empty.webm")).rejects.toThrow(
+      /empty|0 bytes/i,
+    );
+  });
+
   it("throws WhisperError when blob exceeds 25 MB", async () => {
     const { transcribeAudio } = await import("@/lib/whisper");
     const oversizedBlob = makeBlob(26 * 1024 * 1024); // 26 MB
@@ -137,8 +146,6 @@ describe("transcribeAudio", () => {
 
     expect(mockCreate).toHaveBeenCalledTimes(2);
     expect(result.text).toBe("안녕하세요 테스트입니다");
-
-    vi.useRealTimers();
   });
 
   it("throws WhisperError wrapping a non-rate-limit API error without retrying", async () => {
@@ -182,8 +189,6 @@ describe("transcribeAudio", () => {
       /WhisperError|Rate limit|Transcription failed/,
     );
     expect(mockCreate).toHaveBeenCalledTimes(2);
-
-    vi.useRealTimers();
   });
 
   it("calls OpenAI with correct model, language, and response_format", async () => {

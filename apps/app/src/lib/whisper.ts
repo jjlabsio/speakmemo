@@ -77,6 +77,10 @@ export async function transcribeAudio(
   audioBlob: Blob,
   filename: string,
 ): Promise<TranscriptionResult> {
+  if (audioBlob.size === 0) {
+    throw new WhisperError("Audio blob is empty (0 bytes)");
+  }
+
   if (audioBlob.size > MAX_AUDIO_SIZE_BYTES) {
     throw new WhisperError(
       `Audio file exceeds the 25MB limit (received ${audioBlob.size} bytes)`,
